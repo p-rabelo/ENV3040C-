@@ -130,20 +130,17 @@ for i in range(len(countries)):
     pca = PCA(n_components=3)
     data = np.array([years, co2, invest])         #construct our data 
     data_tp = np.transpose(data)           #transpose our data for proper pca analysis
-    #print(data_tp)
     princ_comp = pca.fit_transform(data_tp)
-    #print(princ_comp)
-    print(pca.explained_variance_ratio_)
 
 #2. Extract principle component weights and plot using a bar chart.
                                 ## BAR CHART ##
-    #fig, ax1 = plt.subplots()
-    #ax1.bar([1,2,3],pca.explained_variance_ratio_ * 100 ,color="red",width=0.4)   #plots the variance ratio times 100, for percentage 
-    #plt.xticks([1,2,3])     #Specify for ticks to include all sites
+    fig, ax1 = plt.subplots()
+    ax1.bar([1,2,3],pca.explained_variance_ratio_ * 100 ,color="red",width=0.4)   #plots the variance ratio times 100, for percentage 
+    plt.xticks([1,2,3])     #Specify for ticks to include all sites
 
-    #ax1.set_title("2 Principal Components Weights - " + countries[i])
-    #ax1.set_xlabel("Principal Component")
-    #ax1.set_ylabel("Weight, in percentage")
+    ax1.set_title("2 Principal Components Weights - " + countries[i])
+    ax1.set_xlabel("Principal Component")
+    ax1.set_ylabel("Weight, in percentage")
 #3. Visualize your data on PC1 and PC2. Color code data points by relevant categories.
     fig, ax2 = plt.subplots()            #Plot
     ax2.scatter(princ_comp[:20,0],princ_comp[:20,1], color= "blue")
