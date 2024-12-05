@@ -1,0 +1,161 @@
+#Data Initiation
+import sys
+
+headers = []; table = []; first = True;
+file = open("emissions_investment_data.tsv")
+
+#data requires some transformation as some year samples do not have government investment values. Will take them off.
+for line in file:
+    data = line.split("\t")
+    if first == True:                              #separate the headers using the first == True method
+        headers = data                             #Store headers in different list
+        first = False
+    else:
+        if data[-1] != '\n':                       #do not account for all the years with no recorded governmental investment 
+            for j in range(len(data)):
+                if j == 3 or j == 4: 
+                    data[j] = float(data[j])       #transform all data values form strs to floats
+            table.append(data)
+        
+            
+#lastly, the last header has a line break '\n' at the end that can mess up code later, so I'll deal with this
+print(headers)
+headers[-1] = headers[-1][:-1]
+print(headers)           #print statements clearly show what I meant and that solution was right
+
+#Write python scripts to complete the following tasks. You will need to submit these scripts on github.
+import matplotlib.pyplot as plt
+import numpy as np
+from scipy import stats
+
+countries =[]
+
+#Data Description
+#1. Characterize the mean, meadian and standard deviation of all variables in your dataset relevant to your hypothesis.
+for line in table:
+    if line[0] not in countries:
+        countries.append(line[0])
+
+countries = countries[:-1]
+print(countries)
+for i in range(len(countries)):
+    co2 =[]   ;   invest =[]   
+    for line in table:
+        if line[0] == countries[i]:
+            co2.append(line[-2])
+            invest.append(line[-1])
+            
+            
+    co2_array = np.array(co2)                                ;   invest_array = np.array(invest)
+    co2_mean = np.round(np.mean(co2_array),decimals=2)       ;   invest_mean = np.round(np.mean(invest_array),decimals=2)
+    co2_median = np.round(np.median(co2_array),decimals=2)   ;   invest_median = np.round(np.median(invest_array),decimals=2)
+    co2_stdev = np.round(np.std(co2_array),decimals=2)       ;   invest_stdev = np.round(np.std(invest_array),decimals=2)
+    
+    
+    print(countries[i], "-- CO2 emission: Mean =", co2_mean, "/ Median =", co2_median, "/ Standard Dev =", co2_stdev, ", all in megatons.")
+    print("   Governmental investment: Mean = ", invest_mean, "/ Median =", invest_median, "/ Standard Dev =", invest_stdev ,"all in billion U.S. dollars.")
+
+#2. Create Histograms of each relevant variable.                  
+#keep indentation to remain iterating through each country without losing each CO2 and investment variables
+    fig, [ax1, ax2] = plt.subplots(nrows=1, ncols=2)
+    ax1.hist(co2, bins="auto", density=False)  # Generates a histogram
+    ax1.set_title(countries[i] + " CO2 Emissions")    # Adds title to the graph
+    ax1.set_xlabel("CO2 Emission (Mt)")
+    ax1.set_ylabel("Frequency")
+    
+    ax2.hist(invest, bins="auto")
+    ax2.set_title(countries[i] + " Investment")
+    ax2.set_xlabel("Gvnt. Investment (billion U.S. dollars)")
+    ax2.set_ylabel("Frequency")
+    
+    fig.tight_layout()
+    plt.show()
+    print('\n')
+
+
+from scipy import stats
+
+##Correlation
+#1. Calculate Pearson and Spearman Correlation Coefficients between key variables relevant to your hypothesis.
+
+for i in range(len(countries)):
+    co2 =[]   ;   invest =[]                #initial setup to get co2 emissions and investment for each country
+    for line in table:
+        if line[0] == countries[i]:
+            co2.append(line[-2])
+            invest.append(line[-1])
+    
+    pearsonr = stats.pearsonr(co2, invest) #creates pearson correlation of each combination
+    spearmanr= stats.spearmanr(co2,invest)
+    
+    print(countries[i], "has a pearson correlation between emissions and investment of", round(pearsonr.statistic,5))
+    print(countries[i], "has a spearman correlation between emissions and investment of", round(spearmanr.statistic,5))
+
+    
+#2. Conduct Linear regression on the above variable sets.
+#identation to keep iterating through each country
+    slope, intercept, r, p, std_err = stats.linregress(co2,invest)
+    print("Linear regression is", str(round(slope,9)) + "x +", round(intercept,3), '\n') 
+    
+#3. Generate scatter plots of real data with linear regression lines overlaid   
+#identation to keep iterating through each country
+    linregress = []
+    for j in co2:
+        linregress.append(j * slope + intercept)  
+        #as I purposefully made the linear regression with co2 in the x-axis, this transformation is needed to corretly plot the linear regression
+    fig, ax = plt.subplots()
+    ax.scatter(co2, invest)
+    ax.plot(co2, linregress, c="red")
+    
+    ax.set_title(countries[i])
+    ax.set_xlabel("CO2 Emissions (Mt)")
+    ax.set_ylabel("Governmental Infrastructure Investment \n (billions of 2017 U.S. dollars)")
+    
+    plt.show()
+    print('\n')
+
+##Dimensionality reduction
+from sklearn.decomposition import PCA
+
+for i in range(len(countries)):
+    co2 =[]   ;   invest =[]      ; years=[]          #initial setup to get co2 emissions and investment for each country
+    for line in table:
+        if line[0] == countries[i]:
+            co2.append(line[-2])
+            invest.append(line[-1])
+            years.append(int(line[-3]))
+    print(years)
+#1. Conduct Principle Components Analysis using all quantitative variables in your data set for across all samples.
+    data =[]
+    pca = PCA(n_components=3)
+    data = np.array([years, co2, invest])         #construct our data 
+    data_tp = np.transpose(data)           #transpose our data for proper pca analysis
+    #print(data_tp)
+    princ_comp = pca.fit_transform(data_tp)
+    #print(princ_comp)
+    print(pca.explained_variance_ratio_)
+
+#2. Extract principle component weights and plot using a bar chart.
+                                ## BAR CHART ##
+    #fig, ax1 = plt.subplots()
+    #ax1.bar([1,2,3],pca.explained_variance_ratio_ * 100 ,color="red",width=0.4)   #plots the variance ratio times 100, for percentage 
+    #plt.xticks([1,2,3])     #Specify for ticks to include all sites
+
+    #ax1.set_title("2 Principal Components Weights - " + countries[i])
+    #ax1.set_xlabel("Principal Component")
+    #ax1.set_ylabel("Weight, in percentage")
+#3. Visualize your data on PC1 and PC2. Color code data points by relevant categories.
+    fig, ax2 = plt.subplots()            #Plot
+    ax2.scatter(princ_comp[:20,0],princ_comp[:20,1], color= "blue")
+    ax2.scatter(princ_comp[20:40,0],princ_comp[20:40,1], color="green")
+    ax2.scatter(princ_comp[40:,0],princ_comp[40:,1], color="red")
+    
+    
+    ax2.set_title("PCA - " + countries[i])            #Set title
+    labelX = "PC1 (" + str(np.round(pca.explained_variance_ratio_[0]*100,decimals=5)) + "%)" #Create X-label with proper variance value of first PC
+    ax2.set_xlabel(labelX)
+    labelY ="PC2 (" + str(np.round(pca.explained_variance_ratio_[1]*100,decimals=5)) + "%)"  #Create Y-label with proper variance value of second PC
+    ax2.set_ylabel(labelY)
+    plt.legend(["1960-1979", "1980-1999", "2000-2019"])
+    
+    plt.show()
